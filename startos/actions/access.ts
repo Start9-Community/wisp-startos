@@ -50,7 +50,7 @@ export const inputSpec = InputSpec.of({
         ),
       },
       {
-        placeholder: '192.168.1',
+        placeholder: '192.168.1.',
         patterns: [
           {
             regex: '^[^,\\s]+$',
@@ -67,7 +67,7 @@ export const inputSpec = InputSpec.of({
         description: i18n('IP address prefixes that are always rejected.'),
       },
       {
-        placeholder: '10.0.0',
+        placeholder: '10.0.0.',
         patterns: [
           {
             regex: '^[^,\\s]+$',
