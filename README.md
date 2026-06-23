@@ -26,7 +26,6 @@
 - [Dependencies](#dependencies)
 - [Limitations and Differences](#limitations-and-differences)
 - [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
-- [Contributing](#contributing)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
@@ -77,7 +76,7 @@ The package does not set `[storage] sync`, so wisp uses its default `meta` durab
 |-----------|------|----------|------|-------------|
 | Relay Websocket | 7777 | `ws://` | api | Nostr client connections |
 
-Clients connect using the standard Nostr websocket protocol. The interface is exposed via Tor (.onion) and LAN (.local). Tor uses `ws://`, not `wss://`.
+Clients connect using the standard Nostr websocket protocol. The interface is reachable on your LAN (`.local`) by default; you can additionally expose it over Tor by installing the Tor service and provisioning an `.onion` address for this interface. All of these addresses are plain `ws://`, not `wss://`.
 
 ---
 
@@ -143,12 +142,6 @@ None.
 - Spider mode for syncing events from external relays
 - Rate limiting and event validation
 - NIP-86 relay management API
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development workflow.
 
 ---
 

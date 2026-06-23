@@ -9,16 +9,16 @@
 ## What you get on StartOS
 
 - A **Wisp** Nostr relay backed by an LMDB database, with no external database to manage. Storage is crash-safe by default: a power loss can at most lose the last write, never corrupt your relay.
-- A **Relay Websocket** interface exposing the relay at port 7777 over Tor and LAN.
+- A **Relay Websocket** interface exposing the relay at port 7777 on your LAN, and over Tor if you provision an `.onion` address for it.
 - Configuration entirely through StartOS Actions; there is no separate config UI, and you do not edit `wisp.toml` by hand.
 
 ## Using Wisp
 
 ### Connecting clients
 
-The **Relay Websocket** interface holds the URLs your clients use. Copy a Tor or LAN address from that interface and add it to your Nostr client of choice (Damus, Amethyst, noStrudel, etc.) as a relay.
+The **Relay Websocket** interface holds the URLs your clients use. Copy a LAN address — or a Tor `.onion` address if you've provisioned one — from that interface and add it to your Nostr client of choice (Damus, Amethyst, noStrudel, etc.) as a relay.
 
-The relay speaks plain `ws://` over Tor and LAN rather than `wss://`. If you connect from a web client served over HTTPS, you may need to allow insecure websockets for the relay's address in your browser.
+The relay speaks plain `ws://` rather than `wss://`. If you connect from a web client served over HTTPS, you may need to allow insecure websockets for the relay's address in your browser.
 
 ### Actions
 
