@@ -1,10 +1,10 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '0.5.7:0',
+  version: '0.5.9:0',
   releaseNotes: {
     en_US:
-      'Updates wisp to v0.5.7. Fixes a crash (SIGSEGV) on shutdown when a query was still streaming as the relay stopped, for example during a backup: the connection worker tore down storage while a query was still reading it. Storage was never at risk (crash-safe writes), but the unclean shutdown is gone. Carries forward every prior fix.',
+      'Updates wisp to v0.5.9 (folds in v0.5.8). Fixes two crashes: (1) a SIGSEGV every few hours during normal operation under connection churn, where a finished connection could be freed while the event loop still had a pending read for it; connections are now removed from the event loop before being freed. (2) A SIGSEGV on shutdown when a query was still being served, where connection buffers a query was reading were freed before in-flight handlers finished; the worker pool now drains before any buffers are freed. Storage was never at risk in either case. Carries forward every prior fix.',
   },
   migrations: {
     up: async ({ effects }) => {},
