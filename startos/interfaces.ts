@@ -1,9 +1,9 @@
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { relayInterfaceId, relayPort } from './utils'
+import { relayInterfaceId, relayPort, relayHostId } from './utils'
 
 export const setInterfaces = sdk.setupInterfaces(async ({ effects }) => {
-  const wsMulti = sdk.MultiHost.of(effects, 'websocket')
+  const wsMulti = sdk.MultiHost.of(effects, relayHostId)
   const wsOrigin = await wsMulti.bindPort(relayPort, {
     protocol: 'ws',
   })

@@ -1,6 +1,9 @@
 export const relayPort = 7777
 export const relayInterfaceId = 'websocket'
 
+// Host id (the `sdk.MultiHost.of` group) — distinct from the interface id exported on it.
+export const relayHostId = 'websocket'
+
 // The `main` volume is mounted here (a directory).
 export const storageMountpoint = '/data'
 
