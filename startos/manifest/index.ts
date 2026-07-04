@@ -6,7 +6,7 @@ export const manifest = setupManifest({
   title: 'Wisp',
   license: 'MIT',
   donationUrl: null,
-  packageRepo: 'https://github.com/privkeyio/wisp-startos',
+  packageRepo: 'https://github.com/Start9-Community/wisp-startos',
   upstreamRepo: 'https://github.com/privkeyio/wisp',
   marketingUrl: 'https://github.com/privkeyio/wisp',
   description: { short, long },
