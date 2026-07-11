@@ -1,10 +1,10 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '0.5.11:0',
+  version: '0.5.12:0',
   releaseNotes: {
     en_US:
-      'Updates wisp to v0.5.11. Ephemeral events (NIP-16) are now delivered to live subscribers in real time instead of being dropped. The Spider now detects and reconnects half-open upstream relay connections, probing quiet relays before reconnecting, and its startup no longer blocks the relay. Connection reaping is more robust, reliably reclaiming idle and half-open client connections. Carries forward every prior fix.',
+      'Updates wisp to v0.5.12. Fixes the Spider pinning a CPU core for each quiet upstream relay it stays connected to (a busy-spin in the encrypted read path); idle connections now sleep properly. Also bounds how long the Spider will wait on connecting to an unreachable or stalling relay, so it can no longer delay shutdown long enough for StartOS to force-kill the service. Carries forward every prior fix.',
   },
   migrations: {
     up: async ({ effects }) => {},
