@@ -1,7 +1,12 @@
 import { wispToml } from '../fileModels/wisp.toml'
 import { sdk } from '../sdk'
 import { i18n } from '../i18n'
-import { npubOrHexPattern, pubkeyToHex, relayInterfaceId } from '../utils'
+import {
+  npubOrHexPattern,
+  pubkeyToHex,
+  relayInterfaceId,
+  relayHostId,
+} from '../utils'
 
 const { InputSpec, Value } = sdk
 
@@ -84,12 +89,15 @@ export const configureInfo = sdk.Action.withInput(
 
 export function getExternalAddresses() {
   return sdk.Value.dynamicSelect(async ({ effects }) => {
-    const urls = await sdk.serviceInterface
-      .getOwn(
-        effects,
-        relayInterfaceId,
-        (iface) => iface?.addressInfo?.public.format() || [],
-      )
+    const urls = await sdk.host
+      .getOwn(effects, relayHostId, (host) => {
+        const iface =
+          host &&
+          Object.values(host.bindings)
+            .flatMap((b) => Object.values(b.interfaces))
+            .find((i) => i.id === relayInterfaceId)
+        return iface ? iface.addressInfo.public.format() : []
+      })
       .const()
 
     return {

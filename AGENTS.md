@@ -7,3 +7,11 @@ which provides the packaging guide and agent context one level up. If you're rea
 bare clone with no workspace, the full guide is at <https://docs.start9.com/packaging>.
 
 Work this package's `TODO.md` from top to bottom. Keep `README.md` (architecture, for developers and LLMs) and `instructions.md` (end-user docs) in sync with your changes.
+
+## This repo
+
+- **Package id is `wisp`.** A lightweight Nostr relay written in Zig. The single `primary` daemon exposes one `websocket` interface (host id `websocket`, interface id `websocket`); there are no service dependencies. All configuration is done through Actions, which write `wisp.toml` via the `wispToml` file model.
+
+## Inspecting a running install
+
+To run a command inside the service's container (read its generated config, grep app logs), use `start-cli package attach wisp -n wisp-relay -- <cmd>`. Select the subcontainer by **name** with `-n` (the name passed to `SubContainer.of` in `main.ts` — here `wisp-relay`) or by image with `-i`. Note: `-s/--subcontainer` matches the internal **Guid**, not the name, so passing a name to `-s` fails with "no matching subcontainers".
