@@ -1,4 +1,4 @@
-import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
+import { VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
   version: '0.5.14:0',
@@ -14,8 +14,12 @@ export const current = VersionInfo.of({
     fr_FR:
       'Met à jour wisp vers v0.5.14. Les requêtes sont désormais limitées dans le nombre d\'entrées stockées qu\'elles peuvent parcourir, de sorte qu\'un filtre sélectif correspondant à moins d\'événements que sa limite ne parcourt plus toute la base de données. Cela corrige une charge CPU et des défauts de page sévères sur les grandes bases de données. Le nouveau paramètre query_scan_multiplier (par défaut 20, 0 pour désactiver) contrôle cette limite. Conserve tous les correctifs précédents.',
   },
+  // No data-format change between these versions, so both directions are no-ops.
+  // `down` must stay migratable: StartOS stamps the data version before an
+  // update completes, so if `down` is IMPOSSIBLE a failed or cancelled update
+  // cannot be rolled back and the service wedges instead of reverting.
   migrations: {
     up: async ({ effects }) => {},
-    down: IMPOSSIBLE,
+    down: async ({ effects }) => {},
   },
 })
