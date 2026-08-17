@@ -4,13 +4,15 @@
 
 # Wisp on StartOS
 
-> **Upstream docs:** <https://github.com/privkeyio/wisp/blob/main/README.md>
->
 > Everything not listed in this document should behave the same as upstream
 > Wisp. If a feature, setting, or behavior is not mentioned here, the upstream
-> documentation is accurate and fully applicable.
+> documentation is accurate and fully applicable — see the Documentation
+> section of `instructions.md` for links.
 
-[Wisp](https://github.com/privkeyio/wisp) is a fast, lightweight Nostr relay written in Zig. It uses LMDB for storage with no external database and includes a Spider mode that syncs events from the people you follow on other relays.
+[Wisp](https://github.com/privkeyio/wisp) is a Nostr relay: clients connect over a websocket to publish and read events, and it stores them in an embedded database. This package runs it with its whole configuration exposed as actions, and with the one setting that would silently break it behind a reverse proxy corrected.
+
+- **Upstream repo:** <https://github.com/privkeyio/wisp>
+- **Wrapper repo:** <https://github.com/Start9-Community/wisp-startos>
 
 ---
 
@@ -18,130 +20,166 @@
 
 - [Image and Container Runtime](#image-and-container-runtime)
 - [Volume and Data Layout](#volume-and-data-layout)
-- [Configuration Management](#configuration-management)
-- [Network Access and Interfaces](#network-access-and-interfaces)
-- [Actions (StartOS UI)](#actions-startos-ui)
-- [Backups and Restore](#backups-and-restore)
-- [Health Checks](#health-checks)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Actions](#actions)
+- [Tasks](#tasks)
+- [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
 ## Image and Container Runtime
 
-Single container running wisp, compiled from source (Zig) in the `Dockerfile` and pinned to an upstream release tag.
+One image, built here.
 
-**Architectures:** x86_64, aarch64
+| Property      | Value                                 |
+| ------------- | ------------------------------------- |
+| Image         | Built from this repo's `Dockerfile`   |
+| Architectures | x86_64, aarch64                       |
+| Command       | The relay, against the managed config |
 
-The relay reads its configuration from a generated `wisp.toml` and serves a Nostr websocket on port 7777.
-
----
+| Subcontainer | Purpose                                  |
+| ------------ | ---------------------------------------- |
+| `wisp-relay` | The only daemon — the one to `attach` to |
 
 ## Volume and Data Layout
 
-| Volume | Mount Point | Purpose |
-|--------|-------------|---------|
-| `main` | `/data` | LMDB database. wisp opens LMDB in `MDB_NOSUBDIR` mode, so the data file is `/data/wisp` (plus `/data/wisp-lock`). |
-| `config` | `/app/wisp.toml` (file mount, read-only) | Generated TOML configuration file |
+Two volumes, and the second is mounted as a single file.
 
----
+| Volume   | Mount Point     | Purpose                      |
+| -------- | --------------- | ---------------------------- |
+| `main`   | `/data`         | The event database           |
+| `config` | The config file | The configuration, read-only |
 
-## Configuration Management
+| Path        | Written by | Holds                           |
+| ----------- | ---------- | ------------------------------- |
+| `wisp`      | Wisp       | The LMDB database — every event |
+| `wisp-lock` | Wisp       | LMDB's lock file                |
 
-Configuration is managed entirely through Actions — there is no traditional config UI. The package writes a TOML config at `/app/wisp.toml`; the daemon runs `wisp relay /app/wisp.toml`.
+**The database is a file, not a directory.** Wisp opens LMDB in the mode where the path names the data file itself and a lock file appears beside it — which is why the storage path points at a file inside the mounted volume rather than at a directory of its own.
 
-Fixed, not exposed to the user:
+**The configuration is mounted read-only into the container.** The package owns that file entirely; the relay reads it and never writes it.
 
-```toml
-[server]
-host = "0.0.0.0"
-port = 7777
+## File Models
 
-[storage]
-path = "/data/wisp"
-```
+One model, and it is the whole configuration surface.
 
-Everything else (relay info, spider, limits, access control) is set through the Actions below. **Changes take effect the next time the relay starts.**
+| File        | Format | Modelled                | Written by       |
+| ----------- | ------ | ----------------------- | ---------------- |
+| `wisp.toml` | TOML   | Yes — `FileHelper.toml` | Init and actions |
 
-The package does not set `[storage] sync`, so wisp uses its default `meta` durability: data is flushed on every commit and a crash or power loss can at worst roll back the last transaction, never corrupt the database. This is the right default for an always-on home server.
+The model covers every section the relay understands: the server binding, the advertised metadata, storage, limits, timeouts, rate limits, authentication, security, the spider, negentropy sync, and management.
 
----
+Two fields are **pinned** with `z.literal(...).catch(...)` — the bind address and the port, and the storage path — because the interface and the mount are built on exactly those values. A hand-edit is repaired on read.
 
-## Network Access and Interfaces
+**Lists are stored as comma-joined strings**, not TOML arrays, because Wisp's parser only understands flat scalars under a section header. The actions take proper lists and join them on the way in.
 
-| Interface | Port | Protocol | Type | Description |
-|-----------|------|----------|------|-------------|
-| Relay Websocket | 7777 | `ws://` | api | Nostr client connections |
+**Public keys are accepted as `npub` or hex and stored as hex.** The package decodes bech32 itself, so a key copied out of a Nostr client works without conversion.
 
-Clients connect using the standard Nostr websocket protocol. The interface is reachable on your LAN (`.local`) by default; you can additionally expose it over Tor by installing the Tor service and provisioning an `.onion` address for this interface. All of these addresses are plain `ws://`, not `wss://`.
+### The per-IP connection limit
 
----
+Wisp defaults to allowing ten connections per source IP. **Behind the StartOS reverse proxy every client shares one source address**, so that default would cap the entire relay — internet-wide — at ten connections.
 
-## Actions (StartOS UI)
+The package therefore seeds a very high per-IP value on install, and **only when the operator has not set one**, so the Limits action still wins on later runs. Abuse protection comes from the global connection cap and the event and query rate limits instead, which is the same choice the other Nostr relays on StartOS make.
 
-All actions are in the `configure` group, have visibility `enabled`, and are available at any service status (running or stopped). Pubkey fields accept an `npub` or a 64-character hex key; npubs are decoded to hex before being written to `wisp.toml`.
-
-### Relay Information (`configure-info`)
-
-NIP-11 metadata advertised to clients: **Name**, **Description**, **Admin Pubkey**, **Admin Contact**, and the **Relay URL** advertised for NIP-42 authentication (selected from the relay's own interface addresses).
-
-### Spider Sync (`configure-spider`)
-
-wisp's signature feature. **Enable Spider**, set **Your Pubkey**, and the relay fetches your contact list and continuously syncs those people's notes from other relays into your own. Tunable: **Source Relays**, **Additional Pubkeys**, and **Sync Interval**.
-
-### Limits (`configure-limits`)
-
-Throughput and resource caps: max connections (total and per IP), max subscriptions and filters, message/content/tag sizes, events per minute, default/max query limits, idle timeout, and a minimum NIP-13 proof-of-work difficulty.
-
-### Access Control (`configure-access`)
-
-Require NIP-42 authentication (to connect and/or to publish), restrict connections with an IP allowlist/blocklist, and set the **Management Pubkeys** permitted to administer the relay over NIP-86.
-
----
-
-## Backups and Restore
-
-**Volumes backed up:** `main`, `config`
-
-- `main` — the LMDB database with all relay events
-- `config` — the `wisp.toml` configuration
-
-**Restore behavior:** all relay data and configuration are restored. No reconfiguration needed.
-
----
-
-## Health Checks
-
-| Check | Method | Display | Message |
-|-------|--------|---------|---------|
-| Relay | Port listening (7777) | "Relay" | "The relay is ready and accepting connections" / "The relay is not responding" |
-
----
+**Zero is not "unlimited" here** — Wisp reads it as a limit of zero and rejects every connection — which is why the seeded value is a large number rather than 0.
 
 ## Dependencies
 
 None.
 
----
+A relay's clients come to it, and the optional spider reaches out to other relays to pull events in. Nothing else is needed.
+
+## Network Access and Interfaces
+
+One interface.
+
+| Interface | Id          | Type | Port | Description                   |
+| --------- | ----------- | ---- | ---- | ----------------------------- |
+| Websocket | `websocket` | api  | 7777 | What Nostr clients connect to |
+
+Bound over the websocket protocol and not masked.
+
+**Whether anyone may use it is a configuration question, not a network one.** By default a relay accepts events from anyone who can reach it; the access controls — requiring authentication, requiring it to write, and the address allow and block lists — are what narrow that, and they are actions.
+
+## Installation and First-Run Flow
+
+Install writes the configuration with its defaults, including the corrected per-IP limit. There is no task and no credential.
+
+**The relay is usable immediately and accepts events from anyone who reaches it.** If that is not what you want, set the access controls before publishing the address.
+
+The metadata a relay advertises — its name, description, admin key and contact — is empty until you set it, so clients see an unnamed relay until then.
+
+**Every action takes effect on the next start**, and each one says so: the relay reads its configuration once, at start.
+
+## Actions
+
+Four actions, all in one group, all runnable at any status.
+
+### Relay Information
+
+The public metadata your relay advertises: name, description, admin public key, and contact — plus the relay's own URL, which authentication uses.
+
+### Limits
+
+The whole quantitative surface: maximum connections, connections per address, subscriptions, filters, message size, content length, event tags, events per minute, the default and maximum query limits, the idle timeout, and a minimum proof-of-work difficulty for accepted events.
+
+- **The per-address limit is the one with a trap** — see [File Models](#file-models).
+- **Proof of work is the strongest anti-spam lever here**, and it costs legitimate clients too.
+
+### Access Control
+
+Whether authentication is required at all, whether it is required to write, which keys may manage the relay, and address allow and block lists.
+
+- **Requiring authentication to write is the usual choice** for a personal relay: anyone may read, only you may publish.
+- The allow and block lists are entered as lists and stored joined.
+
+### Spider Sync
+
+The optional spider: whether it runs, which relays to pull from, whose events to pull, and how often.
+
+- **Off by default.** Turning it on makes your relay fetch events from other relays and store them, which is how a personal relay stays populated with the people you follow.
+- **It defaults to a known set of public relays** when none are given, so an enabled spider always has somewhere to sync from.
+- Keys are given as `npub` or hex.
+
+## Tasks
+
+None. This package raises no tasks, so the service is never held on a prompt and its ordinary controls are always available.
+
+## Health Checks
+
+One check, on the only daemon.
+
+| Check     | Displayed as | Method                 |
+| --------- | ------------ | ---------------------- |
+| `primary` | "Relay"      | Port 7777 is listening |
+
+It reports that the relay is accepting connections. **It says nothing about the spider**: an unreachable source relay or a sync that never completes shows a green check, and is visible in the service logs.
+
+## Backups and Restore
+
+Both volumes are copied — `sdk.Backups.ofVolumes('main', 'config')`. That is the event database and the configuration.
+
+**The database is the relay.** For a personal relay it may be the only copy of your own notes that you control, which is the reason to run one at all — so this backup is worth taking seriously.
+
+**LMDB is copied as files**, so a backup taken while the relay is writing is only as consistent as LMDB's own recovery from that state.
+
+A restored instance comes back with the same events, the same metadata and the same access rules. Clients need no change: the relay's identity to them is its address, not anything in the backup.
 
 ## Limitations and Differences
 
-1. **Fixed network binding** — always binds to `0.0.0.0:7777`; not configurable.
-2. **Config changes require a restart** — Actions write `wisp.toml`; wisp reads it at startup, so changes apply on the next start.
-3. **Import/export not yet surfaced** — wisp's JSONL `import`/`export` commands are not exposed as Actions (tracked in `TODO.md`); use backups to preserve data.
-
----
-
-## What Is Unchanged from Upstream
-
-- Full Nostr relay protocol support (NIPs 1, 2, 9, 11, 13, 16, 33, 40, 42, 45, 50, 65, 70, 77, 86)
-- LMDB storage backend
-- Spider mode for syncing events from external relays
-- Rate limiting and event validation
-- NIP-86 relay management API
+1. **The per-address connection limit is seeded high on purpose.** Behind the proxy every client shares one address, and the upstream default would cap the whole relay at ten connections.
+2. **Zero does not mean unlimited** in any of the limit fields — it means zero.
+3. **Every setting applies on the next start.** There is no live reload.
+4. **The relay accepts events from anyone by default.** Access control is opt-in.
+5. **Lists are stored as joined strings**, a consequence of the relay's own parser.
+6. **The bind address, port, and storage path are pinned** and repaired if edited.
+7. **The database is backed up as files**, not as a logical export.
 
 ---
 
@@ -149,20 +187,27 @@ None.
 
 ```yaml
 package_id: wisp
-image: built from source (privkeyio/wisp, Zig)
+image: built from ./Dockerfile
 architectures:
   - x86_64
   - aarch64
+subcontainers:
+  - wisp-relay
 volumes:
-  main: /data (LMDB; data file at /data/wisp)
-  config: /app/wisp.toml (file mount, read-only)
-ports:
-  relay: 7777
-dependencies: none
-config_file: /app/wisp.toml
+  main: /data # LMDB data file at /data/wisp (MDB_NOSUBDIR) plus /data/wisp-lock
+  config: mounted as the wisp.toml file itself, read-only
+file_models:
+  - wisp.toml # the entire configuration; server host/port and storage path are z.literal-pinned
+startos_managed_env_vars: [] # everything is wisp.toml
+dependencies: []
+interfaces:
+  websocket: { type: api, port: 7777, protocol: ws }
 actions:
   - configure-info
-  - configure-spider
   - configure-limits
   - configure-access
+  - configure-spider
+tasks: []
+health_checks:
+  - primary # displayed "Relay"; says nothing about the spider
 ```
