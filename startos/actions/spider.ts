@@ -39,7 +39,7 @@ export const inputSpec = InputSpec.of({
       {
         name: i18n('Source Relays'),
         description: i18n(
-          'The relays Spider connects to when syncing events. Leave empty to use sensible defaults.',
+          'The relays Spider connects to when syncing events. Leave empty to use relay.damus.io, nos.lol and relay.nostr.band.',
         ),
       },
       {

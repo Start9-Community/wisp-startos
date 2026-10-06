@@ -6,15 +6,15 @@ import { relayPort, storagePath } from '../utils'
 // values (strings, numbers, booleans) under [section] headers, so comma-
 // separated lists (relays, ip allow/deny, follow pubkeys) are stored as
 // strings here and joined from list inputs in the Actions.
-export const shape = z.object({
+export const shape = z.looseObject({
   server: z
-    .object({
+    .looseObject({
       host: z.literal('0.0.0.0').catch('0.0.0.0'),
       port: z.literal(relayPort).catch(relayPort),
     })
     .catch({ host: '0.0.0.0', port: relayPort }),
   relay: z
-    .object({
+    .looseObject({
       name: z.string().optional().catch(undefined),
       description: z.string().optional().catch(undefined),
       pubkey: z.string().optional().catch(undefined),
@@ -23,13 +23,13 @@ export const shape = z.object({
     .optional()
     .catch(undefined),
   storage: z
-    .object({
+    .looseObject({
       path: z.literal(storagePath).catch(storagePath),
       map_size_mb: z.number().optional().catch(undefined),
     })
     .catch({ path: storagePath }),
   limits: z
-    .object({
+    .looseObject({
       max_connections: z.number().optional().catch(undefined),
       max_subscriptions: z.number().optional().catch(undefined),
       max_filters: z.number().optional().catch(undefined),
@@ -45,19 +45,19 @@ export const shape = z.object({
     .optional()
     .catch(undefined),
   timeouts: z
-    .object({
+    .looseObject({
       idle_seconds: z.number().optional().catch(undefined),
     })
     .optional()
     .catch(undefined),
   rate_limits: z
-    .object({
+    .looseObject({
       events_per_minute: z.number().optional().catch(undefined),
     })
     .optional()
     .catch(undefined),
   auth: z
-    .object({
+    .looseObject({
       required: z.boolean().optional().catch(undefined),
       to_write: z.boolean().optional().catch(undefined),
       relay_url: z.string().optional().catch(undefined),
@@ -65,7 +65,7 @@ export const shape = z.object({
     .optional()
     .catch(undefined),
   security: z
-    .object({
+    .looseObject({
       trust_proxy: z.boolean().optional().catch(undefined),
       max_connections_per_ip: z.number().optional().catch(undefined),
       ip_whitelist: z.string().optional().catch(undefined),
@@ -74,7 +74,7 @@ export const shape = z.object({
     .optional()
     .catch(undefined),
   spider: z
-    .object({
+    .looseObject({
       enabled: z.boolean().optional().catch(undefined),
       relays: z.string().optional().catch(undefined),
       admin: z.string().optional().catch(undefined),
@@ -84,14 +84,14 @@ export const shape = z.object({
     .optional()
     .catch(undefined),
   negentropy: z
-    .object({
+    .looseObject({
       enabled: z.boolean().optional().catch(undefined),
       max_sync_events: z.number().optional().catch(undefined),
     })
     .optional()
     .catch(undefined),
   management: z
-    .object({
+    .looseObject({
       admin_pubkeys: z.string().optional().catch(undefined),
     })
     .optional()
