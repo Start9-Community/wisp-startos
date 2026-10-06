@@ -51,7 +51,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=builder /src/zig-out/bin/wisp /usr/local/bin/wisp
 
-RUN mkdir -p /app /data
+RUN useradd --system --no-create-home --shell /usr/sbin/nologin wisp \
+    && mkdir -p /app /data \
+    && chown wisp:wisp /data
+
+USER wisp
 
 WORKDIR /app
 
