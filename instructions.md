@@ -35,4 +35,4 @@ Wisp supports NIPs 1, 2, 9, 11, 13, 16, 17, 33, 40, 42, 45, 50, 51, 59, 65, 70, 
 
 ## Backups
 
-The relay's LMDB database and its `wisp.toml` configuration are both included in StartOS backups, so a restore brings back all events and settings with no reconfiguration.
+The relay's LMDB database and its `wisp.toml` configuration are both included in StartOS backups, so a restore brings back all events and settings with no reconfiguration. The relay runs as an unprivileged user, and the database's file ownership is set automatically before each start, including after a restore.
