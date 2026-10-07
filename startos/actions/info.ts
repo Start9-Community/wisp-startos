@@ -14,7 +14,7 @@ export const inputSpec = InputSpec.of({
   relay_url: getExternalAddresses(),
   name: Value.text({
     name: i18n('Name'),
-    description: i18n("Your relay's human-readable name (NIP-11)"),
+    description: null,
     required: false,
     default: null,
     placeholder: 'My Wisp Relay',
@@ -22,7 +22,7 @@ export const inputSpec = InputSpec.of({
   }),
   description: Value.text({
     name: i18n('Description'),
-    description: i18n('A detailed description for your relay (NIP-11)'),
+    description: null,
     required: false,
     default: null,
     placeholder: 'A lightweight Nostr relay',

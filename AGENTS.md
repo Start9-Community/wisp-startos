@@ -18,14 +18,22 @@ Freshly scaffolded? Work the
 guide page, not a file in this repo — read it, don't copy it in.
 
 Keep `README.md` (technical reference for an AI support or administering agent) and
-`instructions.md` (end-user docs) in sync with your changes.
+`instructions.md` (end-user docs) in sync with your changes. This file restates neither:
+whoever changes the package has both, so it carries only what they don't — repo mechanics,
+a change that looks right and is not, where the next thing gets added, a naming trap, a
+build or test invocation particular to this repo.
 
-**Bugs and feature requests are GitHub issues on this repo** — file them as you find them.
+**Fix a defect you spot rather than reporting it** — you have the package open and the
+context to be sure. File **a GitHub issue on this repo** only when the call isn't yours to
+make: you can't pin the cause down, two defensible fixes exist, or it's too large to ride on
+the work in hand. An open issue is a report, not a queue — implement one when you're asked
+to or when it's labelled `Approved`, then close it with `Closes #<n>`.
+
 Don't record work in the repo instead: no `TODO.md`, no `NOTES.md`, no `PLAN.md`. What you
 verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **`max_connections_per_ip` is seeded high deliberately.** Behind the StartOS reverse proxy every client shares the proxy's source IP, so wisp's default of 10 would cap the entire relay — internet-wide — at 10 connections. Same choice nostr-rs-relay and strfry make here; abuse protection is the global `max_connections` plus the event and query rate limits. **`0` is not "unlimited" in wisp — it rejects every connection**, which is why the seed is a large number.
-- **`server.host`/`server.port` and `storage.path` are `z.literal` pins** — the interface and the mounts are built on exactly those values, so a hand-edit is repaired on read.
-- **`wisp.toml` is mounted read-only** as a single file. The package owns it; the relay only reads it, and every setting applies on the next start — say so in every action's warning.
+- **Keep the `max_connections_per_ip` seed a large number, never `0`.** Wisp reads `0` as a limit of zero and rejects every connection.
+- **Keep `server.host`/`server.port` and `storage.path` pinned with `z.literal`.** The interface and the mount are built on exactly those values.
+- **Every action that writes `wisp.toml` carries the "Changes take effect the next time the relay starts." warning.** The relay reads its config only at start.

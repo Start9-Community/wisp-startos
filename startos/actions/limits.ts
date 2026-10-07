@@ -79,7 +79,9 @@ export const inputSpec = InputSpec.of({
   }),
   events_per_minute: Value.number({
     name: i18n('Events Per Minute'),
-    description: i18n('Maximum events a single client may publish per minute.'),
+    description: i18n(
+      'Maximum events a single IP address may publish per minute.',
+    ),
     required: false,
     default: null,
     integer: true,
