@@ -35,13 +35,14 @@
 
 ## Image and Container Runtime
 
-One image, built here.
+One image, built here. The relay runs as the unprivileged `wisp` user. Before each start, a oneshot running as root gives `wisp` ownership of the data volume (`/data`), so databases written as root by earlier versions and databases restored from backup keep working; the relay waits for it to finish.
 
 | Property      | Value                                 |
 | ------------- | ------------------------------------- |
 | Image         | Built from this repo's `Dockerfile`   |
 | Architectures | x86_64, aarch64                       |
 | Command       | The relay, against the managed config |
+| User          | `wisp` (unprivileged)                 |
 
 | Subcontainer | Purpose                                  |
 | ------------ | ---------------------------------------- |

@@ -27,17 +27,28 @@ export const main = sdk.setupMain(async ({ effects }) => {
     'wisp-relay',
   )
 
-  return sdk.Daemons.of(effects).addDaemon('primary', {
-    subcontainer,
-    exec: { command: ['wisp', 'relay', configPath] },
-    ready: {
-      display: i18n('Relay'),
-      fn: () =>
-        sdk.healthCheck.checkPortListening(effects, relayPort, {
-          successMessage: i18n('The relay is ready and accepting connections'),
-          errorMessage: i18n('The relay is not responding'),
-        }),
-    },
-    requires: [],
-  })
+  return sdk.Daemons.of(effects)
+    .addOneshot('chown', {
+      subcontainer,
+      exec: {
+        command: ['chown', '-R', 'wisp:wisp', storageMountpoint],
+        user: 'root',
+      },
+      requires: [],
+    })
+    .addDaemon('primary', {
+      subcontainer,
+      exec: { command: ['wisp', 'relay', configPath], user: 'wisp' },
+      ready: {
+        display: i18n('Relay'),
+        fn: () =>
+          sdk.healthCheck.checkPortListening(effects, relayPort, {
+            successMessage: i18n(
+              'The relay is ready and accepting connections',
+            ),
+            errorMessage: i18n('The relay is not responding'),
+          }),
+      },
+      requires: ['chown'],
+    })
 })

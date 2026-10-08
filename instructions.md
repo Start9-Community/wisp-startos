@@ -31,8 +31,8 @@ All actions live under the **Configure** group and can be run whether the relay 
 
 ## Supported NIPs
 
-Wisp supports NIPs 1, 2, 9, 11, 13, 16, 33, 40, 42, 45, 50, 65, 70, 77, and 86.
+Wisp supports NIPs 1, 2, 9, 11, 13, 16, 17, 33, 40, 42, 45, 50, 51, 59, 65, 70, 77, 78, and 86. NIP-78 app data (kinds 78 and 30078) is private: it is only accepted from, and only served to, a client authenticated (NIP-42) as its author. Gift wraps (NIP-59, kinds 1059 and 21059) are only served to a client authenticated as one of their recipients.
 
 ## Backups
 
-The relay's LMDB database and its `wisp.toml` configuration are both included in StartOS backups, so a restore brings back all events and settings with no reconfiguration.
+The relay's LMDB database and its `wisp.toml` configuration are both included in StartOS backups, so a restore brings back all events and settings with no reconfiguration. The relay runs as an unprivileged user, and the database's file ownership is set automatically before each start, including after a restore.
