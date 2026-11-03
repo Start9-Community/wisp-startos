@@ -9,7 +9,7 @@
 > documentation is accurate and fully applicable — see the Documentation
 > section of `instructions.md` for links.
 
-[Wisp](https://github.com/privkeyio/wisp) is a Nostr relay: clients connect over a websocket to publish and read events, and it stores them in an embedded database. This package runs it with its whole configuration exposed as actions, and with the one setting that would silently break it behind a reverse proxy corrected.
+[Wisp](https://github.com/privkeyio/wisp) is a Nostr relay: clients connect over a websocket to publish and read events, and it stores them in an embedded database. This package runs it with configuration exposed as actions and network, storage, and proxy-trust settings managed for StartOS.
 
 - **Upstream repo:** <https://github.com/privkeyio/wisp>
 - **Wrapper repo:** <https://github.com/Start9-Community/wisp-startos>
@@ -76,19 +76,19 @@ One model, and it is the whole configuration surface.
 
 The model covers every section the relay understands: the server binding, the advertised metadata, storage, limits, timeouts, rate limits, authentication, security, the spider, negentropy sync, and management.
 
-Two fields are **pinned** with `z.literal(...).catch(...)` — the bind address and the port, and the storage path — because the interface and the mount are built on exactly those values. A hand-edit is repaired on read.
+The bind address, port, storage path, and `security.trust_proxy = true` are **pinned** with `z.literal(...).catch(...)`. The interface and mount depend on those network and storage values; trusting the StartOS proxy makes IP-based controls apply to clients. A hand-edit is repaired on the next model write.
 
 **Lists are stored as comma-joined strings**, not TOML arrays, because Wisp's parser only understands flat scalars under a section header. The actions take proper lists and join them on the way in.
 
 **Public keys are accepted as `npub` or hex and stored as hex.** The package decodes bech32 itself, so a key copied out of a Nostr client works without conversion.
 
-### The per-IP connection limit
+### Client IPs and per-IP controls
 
-Wisp defaults to allowing ten connections per source IP. **Behind the StartOS reverse proxy every client shares one source address**, so that default would cap the entire relay — internet-wide — at ten connections.
+The package enforces `security.trust_proxy = true`. The StartOS proxy removes client-supplied forwarded headers and sets `X-Forwarded-For` to its peer's address. Only the proxy reaches the relay port. `trusted_proxies` is left unset, and a manually configured value is preserved on writes.
 
-The package therefore seeds a very high per-IP value on install, and **only when the operator has not set one**, so the Limits action still wins on later runs. Abuse protection comes from the global connection cap and the event and query rate limits instead, which is the same choice the other Nostr relays on StartOS make.
+Connection limits, event and query rate limits, and IP allow/block lists use the forwarded client address, not the proxy's address. Clients sharing a public address, including clients behind CGNAT or a Tor exit, still share those limits.
 
-**Zero is not "unlimited" here** — Wisp reads it as a limit of zero and rejects every connection — which is why the seeded value is a large number rather than 0.
+Wisp defaults to ten connections per IP when no value is configured. The package preserves configured values; use **Limits** to tune the cap for clients sharing an address. **Zero is not "unlimited"** — it rejects every connection.
 
 ## Dependencies
 
@@ -110,7 +110,7 @@ Bound over the websocket protocol and not masked.
 
 ## Installation and First-Run Flow
 
-Install writes the configuration with its defaults, including the corrected per-IP limit. There is no task and no credential.
+Install writes the configuration with its defaults, including enforced proxy trust. There is no task and no credential.
 
 **The relay is usable immediately and accepts events from anyone who reaches it.** If that is not what you want, set the access controls before publishing the address.
 
@@ -174,12 +174,12 @@ A restored instance comes back with the same events, the same metadata and the s
 
 ## Limitations and Differences
 
-1. **The per-address connection limit is seeded high on purpose.** Behind the proxy every client shares one address, and the upstream default would cap the whole relay at ten connections.
+1. **Proxy trust is enforced.** IP-based controls use the client address forwarded by StartOS; clients sharing an address share limits.
 2. **Zero does not mean unlimited** in any of the limit fields — it means zero.
 3. **Every setting applies on the next start.** There is no live reload.
 4. **The relay accepts events from anyone by default.** Access control is opt-in.
 5. **Lists are stored as joined strings**, a consequence of the relay's own parser.
-6. **The bind address, port, and storage path are pinned** and repaired if edited.
+6. **The bind address, port, storage path, and proxy trust are pinned** and repaired on model writes if edited.
 7. **The database is backed up as files**, not as a logical export.
 
 ---
@@ -198,7 +198,7 @@ volumes:
   main: /data # LMDB data file at /data/wisp (MDB_NOSUBDIR) plus /data/wisp-lock
   config: mounted as the wisp.toml file itself, read-only
 file_models:
-  - wisp.toml # the entire configuration; server host/port and storage path are z.literal-pinned
+  - wisp.toml # server host/port, storage path, and security.trust_proxy are z.literal-pinned
 startos_managed_env_vars: [] # everything is wisp.toml
 dependencies: []
 interfaces:

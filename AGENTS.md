@@ -34,6 +34,6 @@ verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **Keep the `max_connections_per_ip` seed a large number, never `0`.** Wisp reads `0` as a limit of zero and rejects every connection.
+- **Never use `0` for an unlimited `max_connections_per_ip`.** Wisp reads `0` as a limit of zero and rejects every connection.
 - **Keep `server.host`/`server.port` and `storage.path` pinned with `z.literal`.** The interface and the mount are built on exactly those values.
 - **Every action that writes `wisp.toml` carries the "Changes take effect the next time the relay starts." warning.** The relay reads its config only at start.

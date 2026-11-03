@@ -6,6 +6,24 @@ import { relayPort, storagePath } from '../utils'
 // values (strings, numbers, booleans) under [section] headers, so comma-
 // separated lists (relays, ip allow/deny, follow pubkeys) are stored as
 // strings here and joined from list inputs in the Actions.
+
+// Every client reaches wisp through the StartOS reverse proxy, so the socket
+// peer is always the proxy (10.0.3.1). Without trust_proxy, wisp keys every
+// per-IP control by that one address: max_connections_per_ip, the event and
+// query rate limits, and the IP allow/deny lists all become relay-wide. The
+// proxy strips client-supplied X-Forwarded-* headers and sets X-Forwarded-For
+// to the real peer, and only the proxy can reach the relay port (each service
+// has its own network namespace), so trusting it is safe. trust_proxy is
+// therefore enforced, not a setting. trusted_proxies is left empty (trust the
+// only peer there is); it is modeled so a hand-set value is kept on writes.
+const securitySchema = z.looseObject({
+  trust_proxy: z.literal(true).catch(true),
+  trusted_proxies: z.string().optional().catch(undefined),
+  max_connections_per_ip: z.number().optional().catch(undefined),
+  ip_whitelist: z.string().optional().catch(undefined),
+  ip_blacklist: z.string().optional().catch(undefined),
+})
+
 export const shape = z.looseObject({
   server: z
     .looseObject({
@@ -64,15 +82,7 @@ export const shape = z.looseObject({
     })
     .optional()
     .catch(undefined),
-  security: z
-    .looseObject({
-      trust_proxy: z.boolean().optional().catch(undefined),
-      max_connections_per_ip: z.number().optional().catch(undefined),
-      ip_whitelist: z.string().optional().catch(undefined),
-      ip_blacklist: z.string().optional().catch(undefined),
-    })
-    .optional()
-    .catch(undefined),
+  security: securitySchema.catch(() => securitySchema.parse({})),
   spider: z
     .looseObject({
       enabled: z.boolean().optional().catch(undefined),
