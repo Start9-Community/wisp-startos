@@ -84,7 +84,7 @@ The bind address, port, storage path, and `security.trust_proxy = true` are **pi
 
 ### Client IPs and per-IP controls
 
-The package enforces `security.trust_proxy = true`. The StartOS proxy removes client-supplied forwarded headers and sets `X-Forwarded-For` to its peer's address. Only the proxy reaches the relay port. `trusted_proxies` is left unset, and a manually configured value is preserved on writes.
+The package enforces `security.trust_proxy = true`. The StartOS proxy removes client-supplied forwarded headers and sets `X-Forwarded-For` to its peer's address. Only the proxy reaches the relay port. `trusted_proxies` defaults to `10.0.3.1`, the StartOS bridge gateway the proxy connects from, which also keeps Wisp from warning at startup that it trusts any peer. A manually configured value is preserved on writes.
 
 Connection limits, event and query rate limits, and IP allow/block lists use the forwarded client address, not the proxy's address. Clients sharing a public address, including clients behind CGNAT or a Tor exit, still share those limits.
 

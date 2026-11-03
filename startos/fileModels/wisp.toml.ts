@@ -14,11 +14,13 @@ import { relayPort, storagePath } from '../utils'
 // proxy strips client-supplied X-Forwarded-* headers and sets X-Forwarded-For
 // to the real peer, and only the proxy can reach the relay port (each service
 // has its own network namespace), so trusting it is safe. trust_proxy is
-// therefore enforced, not a setting. trusted_proxies is left empty (trust the
-// only peer there is); it is modeled so a hand-set value is kept on writes.
+// therefore enforced, not a setting. trusted_proxies defaults to 10.0.3.1, the
+// OS bridge gateway the proxy always connects from: it states that explicitly
+// and stops wisp warning on every start that it trusts any peer. A value the
+// operator sets is kept.
 const securitySchema = z.looseObject({
   trust_proxy: z.literal(true).catch(true),
-  trusted_proxies: z.string().optional().catch(undefined),
+  trusted_proxies: z.string().catch('10.0.3.1'),
   max_connections_per_ip: z.number().optional().catch(undefined),
   ip_whitelist: z.string().optional().catch(undefined),
   ip_blacklist: z.string().optional().catch(undefined),
