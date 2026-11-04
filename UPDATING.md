@@ -22,9 +22,6 @@ This package builds wisp from source inside the `Dockerfile`, pinned to an upstr
 
    Use the dereferenced (`^{}`) commit for annotated tags. The build fails if the clone's HEAD does not match `WISP_COMMIT`.
 
-2. **`startos/versions/current.ts`** — update `version` (`<upstream>:<packaging>`, e.g. `0.3.0:0`) and `releaseNotes`.
-3. Rebuild with `make` and confirm the relay starts.
-
 ### If the build fails with a dependency `hash mismatch`
 
 `zig build` fails this way when one of wisp's dependencies is fetched from a
