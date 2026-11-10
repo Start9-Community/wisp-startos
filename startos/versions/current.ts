@@ -1,18 +1,18 @@
 import { VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '0.9.1:3',
+  version: '0.9.3:0',
   releaseNotes: {
     en_US:
-      'Sets the trusted proxy to the StartOS proxy address (10.0.3.1), so the relay no longer logs a warning on every start that it trusts forwarded client addresses from any peer. A trusted proxy you already set is kept. No data migration is needed.',
+      'Updates Wisp to v0.9.3. Fixes a crash that could abort the relay when it was stopped or restarted while handling messages; no acknowledged events were at risk. The relay also no longer logs a watchdog warning on every start about a setting you never changed. No data migration is needed.',
     es_ES:
-      'Establece como proxy de confianza la dirección del proxy de StartOS (10.0.3.1), de modo que el relé ya no registra en cada inicio una advertencia de que confía en las direcciones de cliente reenviadas por cualquier equipo. Se conserva el proxy de confianza que ya hayas configurado. No se necesita migrar datos.',
+      'Actualiza Wisp a v0.9.3. Corrige un fallo que podía abortar el relé al detenerlo o reiniciarlo mientras procesaba mensajes; ningún evento confirmado estuvo en riesgo. Además, el relé ya no registra en cada inicio una advertencia del watchdog sobre un ajuste que nunca cambiaste. No se necesita migrar datos.',
     de_DE:
-      'Setzt den vertrauenswürdigen Proxy auf die Adresse des StartOS-Proxys (10.0.3.1), sodass das Relay nicht mehr bei jedem Start warnt, dass es weitergeleiteten Client-Adressen von jedem beliebigen Gegenüber vertraut. Ein bereits eingestellter vertrauenswürdiger Proxy bleibt erhalten. Eine Datenmigration ist nicht erforderlich.',
+      'Aktualisiert Wisp auf v0.9.3. Behebt einen Absturz, der das Relay beenden konnte, wenn es während der Verarbeitung von Nachrichten gestoppt oder neu gestartet wurde; bestätigte Events waren nie gefährdet. Außerdem protokolliert das Relay nicht mehr bei jedem Start eine Watchdog-Warnung zu einer Einstellung, die du nie geändert hast. Eine Datenmigration ist nicht erforderlich.',
     pl_PL:
-      'Ustawia zaufane proxy na adres proxy StartOS (10.0.3.1), dzięki czemu przekaźnik nie zapisuje już przy każdym uruchomieniu ostrzeżenia, że ufa przekazywanym adresom klientów od dowolnego nadawcy. Wcześniej ustawione zaufane proxy zostaje zachowane. Migracja danych nie jest potrzebna.',
+      'Aktualizuje Wisp do v0.9.3. Naprawia awarię, która mogła przerwać działanie przekaźnika przy zatrzymaniu lub ponownym uruchomieniu w trakcie obsługi wiadomości; żadne potwierdzone zdarzenia nie były zagrożone. Przekaźnik nie zapisuje też już przy każdym uruchomieniu ostrzeżenia watchdoga o ustawieniu, którego nikt nie zmieniał. Migracja danych nie jest potrzebna.',
     fr_FR:
-      'Définit le proxy de confiance sur l’adresse du proxy StartOS (10.0.3.1), afin que le relais ne journalise plus à chaque démarrage un avertissement indiquant qu’il fait confiance aux adresses client transmises par n’importe quel pair. Un proxy de confiance déjà configuré est conservé. Aucune migration de données n’est nécessaire.',
+      'Met à jour Wisp vers v0.9.3. Corrige un plantage qui pouvait interrompre le relais lorsqu’il était arrêté ou redémarré pendant le traitement de messages ; aucun événement confirmé n’a été menacé. Le relais ne journalise plus non plus à chaque démarrage un avertissement du watchdog concernant un réglage que vous n’avez jamais modifié. Aucune migration de données n’est nécessaire.',
   },
   migrations: {
     up: async ({ effects }) => {},
