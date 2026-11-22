@@ -90,6 +90,8 @@ Connection limits, event and query rate limits, and IP allow/block lists use the
 
 Wisp defaults to ten connections per IP when no value is configured. The package preserves configured values; use **Limits** to tune the cap for clients sharing an address. **Zero is not "unlimited"** — it rejects every connection.
 
+Wisp also caps the connections from one subnet (a /24 for IPv4, a /48 for IPv6) at 50 by default, or at the per-IP cap if that is higher. Clients on one home network, or behind one CGNAT or Tor exit range, share that budget. The cap is `security.max_connections_per_subnet` in `wisp.toml`, where `0` disables it. The **Limits** action does not expose it, and the package preserves a value set by hand. When `max_connections` is full, a new client evicts a connection that has no open subscription or negentropy session and has sent nothing for 120 seconds (`limits.evict_idle_seconds`, `0` disables).
+
 ## Dependencies
 
 None.
