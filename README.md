@@ -88,7 +88,7 @@ The package enforces `security.trust_proxy = true`. The StartOS proxy removes cl
 
 Connection limits, event and query rate limits, and IP allow/block lists use the forwarded client address, not the proxy's address. Clients sharing a public address, including clients behind CGNAT or a Tor exit, still share those limits.
 
-Wisp defaults to ten connections per IP when no value is configured. The package preserves configured values; use **Limits** to tune the cap for clients sharing an address. **Zero is not "unlimited"** — it rejects every connection.
+Wisp defaults to ten connections per IP when no value is configured. The package preserves configured values; use **Limits** to tune the cap for clients sharing an address. **Zero is not "unlimited"** — it is invalid and prevents the relay from starting.
 
 Wisp also caps the connections from one subnet (a /24 for IPv4, a /48 for IPv6) at 50 by default, or at the per-IP cap if that is higher. Clients on one home network, or behind one CGNAT or Tor exit range, share that budget. The cap is `security.max_connections_per_subnet` in `wisp.toml`, where `0` disables it. The **Limits** action does not expose it, and the package preserves a value set by hand. When `max_connections` is full, a new client evicts a connection that has no open subscription or negentropy session and has sent nothing for 120 seconds (`limits.evict_idle_seconds`, `0` disables).
 
@@ -140,7 +140,7 @@ The whole quantitative surface: maximum connections, connections per address, su
 Whether authentication is required at all, whether it is required to write, which keys may manage the relay, and address allow and block lists.
 
 - **Requiring authentication to write is the usual choice** for a personal relay: anyone may read, only you may publish.
-- The allow and block lists are entered as lists and stored joined.
+- The allow and block lists are entered as lists and stored joined. The model preserves their strings without validating or migrating IP-rule syntax. Wisp logs and ignores invalid entries; an invalid blocklist entry blocks nobody, and a nonempty allowlist with no valid entries admits nobody.
 
 ### Spider Sync
 
@@ -177,7 +177,7 @@ A restored instance comes back with the same events, the same metadata and the s
 ## Limitations and Differences
 
 1. **Proxy trust is enforced.** IP-based controls use the client address forwarded by StartOS; clients sharing an address share limits.
-2. **Zero does not mean unlimited** in any of the limit fields — it means zero.
+2. **The per-IP connection cap must be positive.** A zero value is invalid and prevents startup.
 3. **Every setting applies on the next start.** There is no live reload.
 4. **The relay accepts events from anyone by default.** Access control is opt-in.
 5. **Lists are stored as joined strings**, a consequence of the relay's own parser.
